@@ -4,13 +4,20 @@ import * as $ from 'jquery';
 const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
-const GENERIC_IMAGE = "https://store-images.s-microsoft.com/image/apps.65316.13510798887490672.6e1ebb25-96c8-4504-b714-1f7cbca3c5ad.f9514a23-1eb8-4916-a18e-99b1a9817d15?mode=scale&q=90&h=300&w=300"
+const GENERIC_IMAGE = "https://store-images.s-microsoft.com/image/apps.65316.13510798887490672.6e1ebb25-96c8-4504-b714-1f7cbca3c5ad.f9514a23-1eb8-4916-a18e-99b1a9817d15?mode=scale&q=90&h=300&w=300";
 
 interface ShowInterface {
   id: number;
   name: string;
   summary: string;
   image: string;
+}
+
+interface EpisodeInterface {
+  id: number;
+  name: string;
+  season: number;
+  number: number;
 }
 
 /** Given a search term, search for tv shows that match that query.
@@ -20,16 +27,20 @@ interface ShowInterface {
  *    (if no image URL given by API, put in a default image URL)
  */
 
-async function getShowsByTerm(term: string): Promise<ShowInterface[]>{
+async function getShowsByTerm(term: string): Promise<ShowInterface[]> {
   // ADD: Remove placeholder & make request to TVMaze search shows API.
-  let showRes = await axios.get(`https://api.tvmaze.com/search/shows?q=${term}`)
-    
-    return (showRes.data.map(({ show }: ) => ({
-      id: show.id,
-      name: show.name,
-      summary: show.summary,
-      image: show.image ? show.image.medium : GENERIC_IMAGE
-    })))
+  let showRes = await axios.get(`https://api.tvmaze.com/search/shows?q=${term}`);
+  console.log(showRes)
+
+  let shows =  (showRes.data.map(({ show } : {show : ShowInterface}) => ({
+    id: show.id,
+    name: show.name,
+    summary: show.summary,
+    image: show.image ? `${show.image}` : GENERIC_IMAGE
+  })));
+
+
+  return shows
 }
 
 
@@ -40,7 +51,7 @@ function populateShows(shows: ShowInterface[]) {
 
   for (let show of shows) {
     const $show = $(
-        `<div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
+      `<div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
          <div class="media">
            <img
               src="${show.image}"
@@ -57,7 +68,8 @@ function populateShows(shows: ShowInterface[]) {
        </div>
       `);
 
-    $showsList.append($show);  }
+    $showsList.append($show);
+  }
 }
 
 
@@ -66,7 +78,7 @@ function populateShows(shows: ShowInterface[]) {
  */
 
 async function searchForShowAndDisplay() {
-  const term = $("#searchForm-term").val();
+  const term = $("#searchForm-term").val() as string;
   const shows = await getShowsByTerm(term);
 
   $episodesArea.hide();
@@ -83,7 +95,18 @@ $searchForm.on("submit", async function (evt) {
  *      { id, name, season, number }
  */
 
-// async function getEpisodesOfShow(id) { }
+async function getEpisodesOfShow(id: number): Promise<EpisodeInterface[]> {
+  let showRes = await axios.get(`https://api.tvmaze.com/show/${id}/episodes`);
+
+  return (showRes.data.map((episode : EpisodeInterface) => ({
+    id: episode.id,
+    name: episode.name,
+    season: episode.season,
+    number: episode.number
+  })));
+}
+
+
 
 /** Write a clear docstring for this function... */
 
