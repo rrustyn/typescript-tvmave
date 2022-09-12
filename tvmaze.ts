@@ -3,7 +3,10 @@ import * as $ from 'jquery';
 
 const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
+const $episodesList = $("#episodesList");
 const $searchForm = $("#searchForm");
+
+
 const GENERIC_IMAGE = "https://store-images.s-microsoft.com/image/apps.65316.13510798887490672.6e1ebb25-96c8-4504-b714-1f7cbca3c5ad.f9514a23-1eb8-4916-a18e-99b1a9817d15?mode=scale&q=90&h=300&w=300";
 
 interface ShowInterface {
@@ -30,17 +33,15 @@ interface EpisodeInterface {
 async function getShowsByTerm(term: string): Promise<ShowInterface[]> {
   // ADD: Remove placeholder & make request to TVMaze search shows API.
   let showRes = await axios.get(`https://api.tvmaze.com/search/shows?q=${term}`);
-  console.log(showRes)
-
-  let shows =  (showRes.data.map(({ show } : {show : ShowInterface}) => ({
+  let shows = (showRes.data.map(({ show }: { show: ShowInterface; }) => ({
     id: show.id,
     name: show.name,
     summary: show.summary,
-    image: show.image ? `${show.image}` : GENERIC_IMAGE
+    image: show.image ? show.image.medium : GENERIC_IMAGE
   })));
 
 
-  return shows
+  return shows;
 }
 
 
@@ -85,6 +86,7 @@ async function searchForShowAndDisplay() {
   populateShows(shows);
 }
 
+/** On submit, invoke searchForShowAndDisplay */
 $searchForm.on("submit", async function (evt) {
   evt.preventDefault();
   await searchForShowAndDisplay();
@@ -96,9 +98,8 @@ $searchForm.on("submit", async function (evt) {
  */
 
 async function getEpisodesOfShow(id: number): Promise<EpisodeInterface[]> {
-  let showRes = await axios.get(`https://api.tvmaze.com/show/${id}/episodes`);
-
-  return (showRes.data.map((episode : EpisodeInterface) => ({
+  let episodeRes = await axios.get(`https://api.tvmaze.com/shows/${id}/episodes`);
+  return (episodeRes.data.map((episode: EpisodeInterface) => ({
     id: episode.id,
     name: episode.name,
     season: episode.season,
@@ -108,6 +109,37 @@ async function getEpisodesOfShow(id: number): Promise<EpisodeInterface[]> {
 
 
 
-/** Write a clear docstring for this function... */
+/**
+ * Given a list of episodes,
+ * Clears $episodeList
+ * $episodesArea toggles to visible
+ * and displays all episodes
+* @params {EpisodeInterface[]}
+*/
 
-// function populateEpisodes(episodes) { }
+function populateEpisodes(episodes: EpisodeInterface[]): void {
+  $episodesList.empty();
+  $episodesArea.show();
+
+  for (let episode of episodes) {
+    const $episode = $(
+      `<li>
+      ${episode.name} (season: ${episode.season} number: ${episode.number})
+      </li>
+        `);
+
+    $episodesList.append($episode);
+  }
+}
+
+/** On click, await getEpisodesOfShow()
+ * then invoke populateEpisodes()
+ */
+async function handleEpisodesList(evt : JQuery.ClickEvent) : Promise<void>{
+  evt.preventDefault();
+  const showId = $(evt.target).closest(".Show").data("show-id");
+  const episodes = await getEpisodesOfShow(showId);
+  populateEpisodes(episodes);
+}
+
+$showsList.on("click", ".Show-getEpisodes", handleEpisodesList);

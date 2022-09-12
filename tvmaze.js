@@ -12777,6 +12777,7 @@ var axios_1 = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 var $ = __webpack_require__(/*! jquery */ "./node_modules/jquery/dist/jquery.js");
 var $showsList = $("#showsList");
 var $episodesArea = $("#episodesArea");
+var $episodesList = $("#episodesList");
 var $searchForm = $("#searchForm");
 var GENERIC_IMAGE = "https://store-images.s-microsoft.com/image/apps.65316.13510798887490672.6e1ebb25-96c8-4504-b714-1f7cbca3c5ad.f9514a23-1eb8-4916-a18e-99b1a9817d15?mode=scale&q=90&h=300&w=300";
 /** Given a search term, search for tv shows that match that query.
@@ -12787,21 +12788,22 @@ var GENERIC_IMAGE = "https://store-images.s-microsoft.com/image/apps.65316.13510
  */
 function getShowsByTerm(term) {
     return __awaiter(this, void 0, void 0, function () {
-        var showRes;
+        var showRes, shows;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0: return [4 /*yield*/, axios_1.default.get("https://api.tvmaze.com/search/shows?q=".concat(term))];
                 case 1:
                     showRes = _a.sent();
-                    return [2 /*return*/, (showRes.data.map(function (_a) {
-                            var show = _a.show;
-                            return ({
-                                id: show.id,
-                                name: show.name,
-                                summary: show.summary,
-                                image: show.image ? show.image.medium : GENERIC_IMAGE
-                            });
-                        }))];
+                    shows = (showRes.data.map(function (_a) {
+                        var show = _a.show;
+                        return ({
+                            id: show.id,
+                            name: show.name,
+                            summary: show.summary,
+                            image: show.image ? show.image.medium : GENERIC_IMAGE
+                        });
+                    }));
+                    return [2 /*return*/, shows];
             }
         });
     });
@@ -12835,6 +12837,7 @@ function searchForShowAndDisplay() {
         });
     });
 }
+/** On submit, invoke searchForShowAndDisplay */
 $searchForm.on("submit", function (evt) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -12852,9 +12855,61 @@ $searchForm.on("submit", function (evt) {
 /** Given a show ID, get from API and return (promise) array of episodes:
  *      { id, name, season, number }
  */
-// async function getEpisodesOfShow(id) { }
-/** Write a clear docstring for this function... */
-// function populateEpisodes(episodes) { }
+function getEpisodesOfShow(id) {
+    return __awaiter(this, void 0, void 0, function () {
+        var episodeRes;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, axios_1.default.get("https://api.tvmaze.com/shows/".concat(id, "/episodes"))];
+                case 1:
+                    episodeRes = _a.sent();
+                    return [2 /*return*/, (episodeRes.data.map(function (episode) { return ({
+                            id: episode.id,
+                            name: episode.name,
+                            season: episode.season,
+                            number: episode.number
+                        }); }))];
+            }
+        });
+    });
+}
+/**
+ * Given a list of episodes,
+ * Clears $episodeList
+ * $episodesArea toggles to visible
+ * and displays all episodes
+* @params {EpisodeInterface[]}
+*/
+function populateEpisodes(episodes) {
+    $episodesList.empty();
+    $episodesArea.show();
+    for (var _i = 0, episodes_1 = episodes; _i < episodes_1.length; _i++) {
+        var episode = episodes_1[_i];
+        var $episode = $("<li>\n      ".concat(episode.name, " (season: ").concat(episode.season, " number: ").concat(episode.number, ")\n      </li>\n        "));
+        $episodesList.append($episode);
+    }
+}
+/** On click, await getEpisodesOfShow()
+ * then invoke populateEpisodes()
+ */
+function handleEpisodesList(evt) {
+    return __awaiter(this, void 0, void 0, function () {
+        var showId, episodes;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    evt.preventDefault();
+                    showId = $(evt.target).closest(".Show").data("show-id");
+                    return [4 /*yield*/, getEpisodesOfShow(showId)];
+                case 1:
+                    episodes = _a.sent();
+                    populateEpisodes(episodes);
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+$showsList.on("click", ".Show-getEpisodes", handleEpisodesList);
 
 
 /***/ })
