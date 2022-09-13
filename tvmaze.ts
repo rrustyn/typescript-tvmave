@@ -6,14 +6,18 @@ const $episodesArea = $("#episodesArea");
 const $episodesList = $("#episodesList");
 const $searchForm = $("#searchForm");
 
-
-const GENERIC_IMAGE = "https://store-images.s-microsoft.com/image/apps.65316.13510798887490672.6e1ebb25-96c8-4504-b714-1f7cbca3c5ad.f9514a23-1eb8-4916-a18e-99b1a9817d15?mode=scale&q=90&h=300&w=300";
+const BASE_URL ="https://api.tvmaze.com"
+const MISSING_SHOW_IMAGE = "https://store-images.s-microsoft.com/image/apps.65316.13510798887490672.6e1ebb25-96c8-4504-b714-1f7cbca3c5ad.f9514a23-1eb8-4916-a18e-99b1a9817d15?mode=scale&q=90&h=300&w=300";
 
 interface ShowInterface {
   id: number;
   name: string;
   summary: string;
   image: string;
+}
+
+interface ShowApiInterface extends Omit <ShowInterface, "image">{
+  image: {medium: string}
 }
 
 interface EpisodeInterface {
@@ -32,13 +36,14 @@ interface EpisodeInterface {
 
 async function getShowsByTerm(term: string): Promise<ShowInterface[]> {
   // ADD: Remove placeholder & make request to TVMaze search shows API.
-  let showRes = await axios.get(`https://api.tvmaze.com/search/shows?q=${term}`);
-  let shows = (showRes.data.map(({ show }: { show: ShowInterface; }) => ({
+  let showRes = await axios.get(`${BASE_URL}/search/shows?q=${term}`);
+  let shows = (showRes.data.map(({ show }: { show: ShowApiInterface; }) => ({
     id: show.id,
     name: show.name,
     summary: show.summary,
-    image: show.image ? show.image.medium : GENERIC_IMAGE
+    image: show.image?.medium || MISSING_SHOW_IMAGE
   })));
+  // line 44 -> Optional chaining 
 
 
   return shows;
@@ -98,7 +103,7 @@ $searchForm.on("submit", async function (evt) {
  */
 
 async function getEpisodesOfShow(id: number): Promise<EpisodeInterface[]> {
-  let episodeRes = await axios.get(`https://api.tvmaze.com/shows/${id}/episodes`);
+  let episodeRes = await axios.get(`${BASE_URL}/shows/${id}/episodes`);
   return (episodeRes.data.map((episode: EpisodeInterface) => ({
     id: episode.id,
     name: episode.name,

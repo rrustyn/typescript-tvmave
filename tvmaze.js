@@ -12779,7 +12779,8 @@ var $showsList = $("#showsList");
 var $episodesArea = $("#episodesArea");
 var $episodesList = $("#episodesList");
 var $searchForm = $("#searchForm");
-var GENERIC_IMAGE = "https://store-images.s-microsoft.com/image/apps.65316.13510798887490672.6e1ebb25-96c8-4504-b714-1f7cbca3c5ad.f9514a23-1eb8-4916-a18e-99b1a9817d15?mode=scale&q=90&h=300&w=300";
+var BASE_URL = "https://api.tvmaze.com";
+var MISSING_SHOW_IMAGE = "https://store-images.s-microsoft.com/image/apps.65316.13510798887490672.6e1ebb25-96c8-4504-b714-1f7cbca3c5ad.f9514a23-1eb8-4916-a18e-99b1a9817d15?mode=scale&q=90&h=300&w=300";
 /** Given a search term, search for tv shows that match that query.
  *
  *  Returns (promise) array of show objects: [show, show, ...].
@@ -12791,18 +12792,20 @@ function getShowsByTerm(term) {
         var showRes, shows;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, axios_1.default.get("https://api.tvmaze.com/search/shows?q=".concat(term))];
+                case 0: return [4 /*yield*/, axios_1.default.get("".concat(BASE_URL, "/search/shows?q=").concat(term))];
                 case 1:
                     showRes = _a.sent();
                     shows = (showRes.data.map(function (_a) {
+                        var _b;
                         var show = _a.show;
                         return ({
                             id: show.id,
                             name: show.name,
                             summary: show.summary,
-                            image: show.image ? show.image.medium : GENERIC_IMAGE
+                            image: ((_b = show.image) === null || _b === void 0 ? void 0 : _b.medium) || MISSING_SHOW_IMAGE
                         });
                     }));
+                    // line 44 -> Optional chaining 
                     return [2 /*return*/, shows];
             }
         });
@@ -12860,7 +12863,7 @@ function getEpisodesOfShow(id) {
         var episodeRes;
         return __generator(this, function (_a) {
             switch (_a.label) {
-                case 0: return [4 /*yield*/, axios_1.default.get("https://api.tvmaze.com/shows/".concat(id, "/episodes"))];
+                case 0: return [4 /*yield*/, axios_1.default.get("".concat(BASE_URL, "/shows/").concat(id, "/episodes"))];
                 case 1:
                     episodeRes = _a.sent();
                     return [2 /*return*/, (episodeRes.data.map(function (episode) { return ({
